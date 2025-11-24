@@ -1,0 +1,26 @@
+version: '3.8'
+
+services:
+  localstack:
+    image: localstack/localstack:latest
+    ports:
+      - "4566:4566"
+    environment:
+      - SERVICES=s3,iam,sts
+      - DEBUG=1
+      - DATA_DIR=/tmp/localstack/data
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock"
+
+  terraform-runner:
+    build: .
+    volumes:
+      - .:/workspace
+    environment:
+      - AWS_ACCESS_KEY_ID=test
+      - AWS_SECRET_ACCESS_KEY=test
+      - AWS_DEFAULT_REGION=us-east-1
+      - AWS_ENDPOINT_URL=http://localstack:4566
+    depends_on:
+      - localstack
+    command: [ "-c", "dos2unix scripts/entrypoint.sh && chmod +x scripts/entrypoint.sh && ./scripts/entrypoint.sh" ]
